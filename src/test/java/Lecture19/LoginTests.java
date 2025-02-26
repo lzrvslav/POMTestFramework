@@ -1,0 +1,98 @@
+package Lecture19;
+
+import Lecture19.page.object.Header;
+import Lecture19.page.object.HomePage;
+import Lecture19.page.object.LoginPage;
+import Lecture19.page.object.ProfilePage;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.devtools.v85.profiler.model.Profile;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.time.Duration;
+
+public class LoginTests {
+    private final String PASSWORD = "1234567890";
+    private WebDriver webDriver;
+    @BeforeSuite
+    protected final void setupTestSuite(){
+        WebDriverManager.chromedriver().setup();
+        WebDriverManager.firefoxdriver().setup();
+        WebDriverManager.edgedriver().setup();
+    }
+
+    @BeforeMethod
+    protected final void setUpTest(){
+        this.webDriver = new ChromeDriver();
+        //this.webDriver = new EdgeDriver();
+        this.webDriver.manage().window().maximize();
+        this.webDriver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+
+        this.webDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        this.webDriver.navigate().to("http://training.skillo-bg.com:4200/users/login");
+    }
+    @AfterMethod
+    private final void tearDownTest(){
+        if (this.webDriver != null) {
+            this.webDriver.close();
+        }
+    }
+
+    @DataProvider(name="getUsers")
+    public Object[][] getUsers(){
+        return new Object[][]{
+                {"testUser1", 9876, "User not found"},
+                {"slavlzrv", 9204, "Successful login!"},
+                {"testUser3", 1234, "Invalid password"}};
+    }
+
+    @Test(dataProvider = "getUsers")
+    public void LoginUser(String username, int userId, String errorMessage){
+        // initial page objects definition
+        LoginPage login = new LoginPage(this.webDriver);
+        ProfilePage profile = new ProfilePage(this.webDriver);
+        Header header = new Header(this.webDriver);
+        HomePage home = new HomePage(this.webDriver);
+
+        // validate initial loading of page
+        Assert.assertTrue(login.isUrlLoaded(),"The login page is not loaded");
+
+        // validate the login form is loaded
+        String singInTitle = login.getSignInElementText();
+        Assert.assertEquals(singInTitle,"Sign in", "Login form is not loaded");
+
+        // fill login form
+        login.populatePassword(this.PASSWORD);
+        login.populateUsername(username);
+        login.clickSignIn();
+
+        // hint for homework - add validation of error/success message of login
+
+        validateErrorMessage(errorMessage);
+
+        // validate home page is loaded after login
+        Assert.assertTrue(home.isUrlLoaded(), "Home page is not loaded");
+
+        // navigate to profile page
+        header.clickProfileLink();
+
+        // validate profile page is loaded
+        Assert.assertTrue(profile.isUrlLoaded(userId),"The user profile page is not loaded");
+
+        // validate username is correct
+        Assert.assertTrue(profile.isUsernameAsExpected(username), "The username is not as expected");
+    }
+
+    private void validateErrorMessage(String errorMessage) {
+        WebDriverWait errorWait = new WebDriverWait(this.webDriver, Duration.ofMillis(1500));
+        errorWait.until(ExpectedConditions.textToBe(
+                By.xpath("//*[@class='toast-message ng-star-inserted']"),
+                errorMessage
+        ));
+    }
+}
