@@ -1,4 +1,4 @@
-package Lecture19.page.object;
+package page.object;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;

@@ -1,14 +1,11 @@
-package Lecture19;
-
-import Lecture19.page.object.Header;
-import Lecture19.page.object.HomePage;
-import Lecture19.page.object.LoginPage;
-import Lecture19.page.object.ProfilePage;
+import page.object.Header;
+import page.object.HomePage;
+import page.object.LoginPage;
+import page.object.ProfilePage;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.devtools.v85.profiler.model.Profile;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
@@ -48,7 +45,9 @@ public class LoginTests {
         return new Object[][]{
                 {"testUser1", 9876, "User not found"},
                 {"slavlzrv", 9204, "Successful login!"},
-                {"testUser3", 1234, "Invalid password"}};
+                {"testUser3", 1234, "Invalid password"},
+                {"ultraUser1", 9220, "Successful login!"},
+        };
     }
 
     @Test(dataProvider = "getUsers")
