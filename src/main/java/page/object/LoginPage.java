@@ -22,9 +22,10 @@ public class LoginPage {
 
     // filling in the credentials
     public void populateUsername(String username){
-        WebElement usernameField =webDriver.findElement(By.id("defaultLoginFormUsername"));
+        WebElement usernameField = webDriver.findElement(By.id("defaultLoginFormUsername"));
         usernameField.sendKeys(username);
     }
+
     // filling in the credentials
     public void populatePassword(String password){
         WebElement passwordField = webDriver.findElement(By.id("defaultLoginFormPassword"));

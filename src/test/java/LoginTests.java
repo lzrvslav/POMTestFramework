@@ -1,7 +1,9 @@
-import page.object.Header;
-import page.object.HomePage;
-import page.object.LoginPage;
-import page.object.ProfilePage;
+
+
+import page.factory.Header;
+import page.factory.HomePage;
+import page.factory.LoginPage;
+import page.factory.ProfilePage;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -14,13 +16,13 @@ import org.testng.annotations.*;
 import java.time.Duration;
 
 public class LoginTests {
-    private final String PASSWORD = "1234567890";
+    //private final String PASSWORD = "1234567890";
     private WebDriver webDriver;
     @BeforeSuite
     protected final void setupTestSuite(){
         WebDriverManager.chromedriver().setup();
-        WebDriverManager.firefoxdriver().setup();
-        WebDriverManager.edgedriver().setup();
+//        WebDriverManager.firefoxdriver().setup();
+//        WebDriverManager.edgedriver().setup();
     }
 
     @BeforeMethod
@@ -43,15 +45,31 @@ public class LoginTests {
     @DataProvider(name="getUsers")
     public Object[][] getUsers(){
         return new Object[][]{
-                {"testUser1", 9876, "User not found"},
-                {"slavlzrv", 9204, "Successful login!"},
-                {"testUser3", 1234, "Invalid password"},
-                {"ultraUser1", 9220, "Successful login!"},
+                {"slavlzrv","1234567890", 9204, "Successful login!"},
+        };
+    }
+
+    @DataProvider(name="errorMessages")
+    public Object[][] errorMessages(){
+        return new Object[][]{
+                // username
+                {"blasfsafasfabla","asfsaf", "User not found"},
+                {"dbsdhsh","asdasfsaf", "Invalid password"},
+                {"dbsdhsh","", "Password cannot be empty"},
+                // email
+                {"blasfsafasfabla@tezt.xom","asfsaf", "User not found"},
+                {"blasfsafasfabla@.xom","asfsaf", "User not found"},
+                {"blasfsafasfabla@","asfsaf", "User not found"},
+                {"slav@test.com","asdasfsaf", "Invalid password"},
+                {"viasfasfasfsadko@teafasfasfst.com","", "Password cannot be empty"},
+                // valid for both email and username
+                {"","1234567890", "UsernameOrEmail cannot be empty"},
+                {"","", "UsernameOrEmail cannot be empty"},
         };
     }
 
     @Test(dataProvider = "getUsers")
-    public void LoginUser(String username, int userId, String errorMessage){
+    public void LoginUser(String username, String password, int userId, String signInMessage){
         // initial page objects definition
         LoginPage login = new LoginPage(this.webDriver);
         ProfilePage profile = new ProfilePage(this.webDriver);
@@ -62,23 +80,21 @@ public class LoginTests {
         Assert.assertTrue(login.isUrlLoaded(),"The login page is not loaded");
 
         // validate the login form is loaded
-        String singInTitle = login.getSignInElementText();
-        Assert.assertEquals(singInTitle,"Sign in", "Login form is not loaded");
+        Assert.assertEquals(login.getSignInElementText(),"Sign in", "Login form is not loaded");
 
         // fill login form
-        login.populatePassword(this.PASSWORD);
+        login.populatePassword(password);
         login.populateUsername(username);
         login.clickSignIn();
 
-        // hint for homework - add validation of error/success message of login
-
-        validateErrorMessage(errorMessage);
+        // check the sign in message
+        login.onSignInMessage(signInMessage);
 
         // validate home page is loaded after login
         Assert.assertTrue(home.isUrlLoaded(), "Home page is not loaded");
 
         // navigate to profile page
-        header.clickProfileLink();
+        header.clickProfileLinkWithHandle();
 
         // validate profile page is loaded
         Assert.assertTrue(profile.isUrlLoaded(userId),"The user profile page is not loaded");
@@ -87,11 +103,29 @@ public class LoginTests {
         Assert.assertTrue(profile.isUsernameAsExpected(username), "The username is not as expected");
     }
 
-    private void validateErrorMessage(String errorMessage) {
-        WebDriverWait errorWait = new WebDriverWait(this.webDriver, Duration.ofMillis(1500));
-        errorWait.until(ExpectedConditions.textToBe(
-                By.xpath("//*[@class='toast-message ng-star-inserted']"),
-                errorMessage
-        ));
+    @Test(dataProvider = "errorMessages")
+    public void LoginErrorMessages(String username, String password, String signInMessageExpected){
+        // initial page objects definition
+        LoginPage login = new LoginPage(this.webDriver);
+        ProfilePage profile = new ProfilePage(this.webDriver);
+        Header header = new Header(this.webDriver);
+        HomePage home = new HomePage(this.webDriver);
+
+        // validate initial loading of page
+        Assert.assertTrue(login.isUrlLoaded(),"The login page is not loaded");
+
+        // validate the login form is loaded
+        Assert.assertEquals(login.getSignInElementText(),"Sign in", "Login form is not loaded");
+
+        // fill login form
+        login.populatePassword(password);
+        login.populateUsername(username);
+        login.clickSignIn();
+
+        // check the sing in message
+        String singInMessageActual = login.getSignInMessage();
+
+        // Final validation of the test
+        Assert.assertEquals(singInMessageActual, signInMessageExpected, "Sing in error message is not as expected");
     }
 }
